@@ -59,6 +59,7 @@ class Dataset(torch.utils.data.Dataset):
         return(self.text_array,self.label_array,self.vocab)
 
     def build_vocabulary(self):
+        #Working version embedded in setup
         flat_list = np.unique([item for subl in self.text_array for item in self.tokenizer(subl)])
         print(flat_list)
         int_list = np.array(range(len(flat_list)))+1
