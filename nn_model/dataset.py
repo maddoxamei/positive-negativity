@@ -45,7 +45,9 @@ class Dataset(torch.utils.data.Dataset):
             self.label_array = csv_input.iloc[0:,1]  #Label column may need changing
 
         #This part was build_vocabulary
-        flat_list = np.unique([item for subl in self.text_array for item in self.tokenizer(subl)])
+        flat_list = [item for subl in self.text_array for item in self.tokenizer(subl)]
+        flat_list = pd.value_counts(flat_list)
+        flat_list = (flat_list[flat_list > 5]).index.to_numpy()
         int_list = np.array(range(len(flat_list))) + 1
 
         #if debug: #Not implemented yet
