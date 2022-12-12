@@ -11,11 +11,15 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
 import torchtext
-from transforms import *
 import pandas as pd
 
+from main import *
+
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, ref_doc_path: str,):
+    def __init__(self,
+                 ref_doc_path: str,
+                 tokenizer=torchtext.data.utils.get_tokenizer('basic_english')
+                 ):
 
         self.documents = [
             os.path.join(ref_doc_path, path)
@@ -24,7 +28,7 @@ class Dataset(torch.utils.data.Dataset):
         ]
 
         #self.tokenizer = Simple_Tokenizer
-        self.tokenizer = torchtext.data.utils.get_tokenizer('basic_english') #Should come from transforms, was producing a circular import error.
+        self.tokenizer = tokenizer
 
         # self.df = pd.DataFrame({'text': pd.Series(dtype='str'),
         #            'label': pd.Series(dtype='str'),
@@ -74,7 +78,7 @@ class Dataset(torch.utils.data.Dataset):
         return(self.text_array,self.label_array,self.vocab)
 
 class DataModule(pl.LightningDataModule):
-    def __init__(self, seq_len = 1, batch_size = 128, num_workers=0, shuffle = False):
+    def __init__(self, text_preprocess, seq_len = 1, batch_size = 128, num_workers=0, shuffle = False):
         super().__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -88,7 +92,7 @@ class DataModule(pl.LightningDataModule):
         self.X_test = None
         self.X_test = None
         self.columns = None
-        self.preprocessing = None
+        self.text_preprocess = text_preprocess
 
     def setup(self, stage=None):
         # X = self.df[['text','index']]
@@ -109,13 +113,13 @@ class DataModule(pl.LightningDataModule):
         )
 
         if stage == 'fit' or stage is None:
-            self.X_train = preprocessing.transform(X_train)
+            self.X_train = self.text_preprocess(X_train)
             self.Y_train = Y_train.values.reshape((-1, 1))
-            self.X_val = preprocessing.transform(X_val)
+            self.X_val = self.text_preprocess(X_val)
             self.Y_val = Y_val.values.reshape((-1, 1))
 
         if stage == 'test' or stage is None:
-            self.X_test = preprocessing.transform(X_test)
+            self.X_test = self.text_preprocess(X_test)
             self.Y_test = Y_test.values.reshape((-1, 1))
 
 

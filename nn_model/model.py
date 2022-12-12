@@ -3,6 +3,8 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 
+
+
 class LSTM_Classifier(pl.LightningModule):
     def __init__(self,
                  embedding_size,
