@@ -1,36 +1,64 @@
 import torch
 import pytorch_lightning as pl
+import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
-#Need:
-#   text,
-#   labels,
-#   vocabulary
 
 class LSTM_Classifier(pl.LightningModule):
-    def __init__(self,embedding_length,hidden_size,output_size=1):
+    def __init__(self,
+                 embedding_size,
+                 hidden_size,
+                 seq_len,
+                 batch_size,
+                 num_layers,
+                 dropout,
+                 learning_rate,
+                 criterion):
         super().__init__()
-        self.embedding_length = embedding_length
+        self.n_features = embedding_size
         self.hidden_size = hidden_size
-        self.output_size = output_size
+        self.seq_len = seq_len
+        self.batch_size = batch_size
+        self.num_layers = num_layers
+        self.dropout = dropout
+        self.criterion = criterion
+        self.learning_rate = learning_rate
 
-        self.lstm = nn.LSTM(self.embedding_length,self.hidden_size)
-        self.label = nn.Linear(self.hidden_size,self.output_size)
+        self.lstm = nn.LSTM(input_size=embedding_size,
+                            hidden_size=hidden_size,
+                            num_layers=num_layers,
+                            dropout=dropout,
+                            batch_first=True)
+        self.linear = nn.Linear(hidden_size, 1)
 
-    def forward(self):
-        h_0 = Variable(torch.zeros(1, batch_size, self.hidden_size).cuda())
-        c_0 = Variable(torch.zeros(1, batch_size, self.hidden_size).cuda())
+    def forward(self, x):
+        # lstm_out = (batch_size, seq_len, hidden_size)
+        lstm_out, _ = self.lstm(x)
+        y_pred = self.linear(lstm_out[:, -1])
+        return y_pred
 
-        output, (final_hidden_state, final_cell_state) = self.lstm(input, (h_0, c_0))
-
-        return self.label(final_hidden_state[-1])
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        y_hat = self(x) #self being the model?
-        loss = torch.nn.CrossEntropyLoss(y_hat,y) #Prediction, actual?
-        return loss
+        y_hat = self(x)
+        loss = self.criterion(y_hat, y)
+        result = pl.TrainResult(loss)
+        result.log('train_loss', loss)
+        return result
 
-    def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.02)
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self(x)
+        loss = self.criterion(y_hat, y)
+        result = pl.EvalResult(checkpoint_on=loss)
+        result.log('val_loss', loss)
+        return result
+
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self(x)
+        loss = self.criterion(y_hat, y)
+        result = pl.EvalResult()
+        result.log('test_loss', loss)
+        return result

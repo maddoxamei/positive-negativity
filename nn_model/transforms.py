@@ -8,7 +8,17 @@ from dataset import *
 
 #BERT_tokenizer = torchtext.transforms.BERTTokenizer(vocab_path=VOCAB_FILE, do_lower_case=True, return_tokens=True)
 
-class text_encoder(object):
+class preprocessor(object):
+    def __init__(self,Vocab_Transform,Text_Encoder):
+        self.vocab = Vocab_Transform
+        self.encoder = Text_Encoder
+
+    def __call__(self,text_list):
+        flat_list = [item for subl in text_list for item in self.vocab(subl)]
+        return self.encoder(flat_list)
+
+
+class Text_Encoder(object):
     def __init__(self,tensor_size:int):
         self.size = tensor_size
         self.blank = np.zeros(self.size)
@@ -37,15 +47,17 @@ class Text_Cleaner(object):
         return(self.cleaner(text))
 
 class Vocab_Transform(object):
+    """
+    vocab: dictionary of vocabulary mappings from dataset (dataset.vocab)
+    input_tokens: A tokenized list of words.
+    """
     def __init__(self,vocab:dict):
         self.vocabulary_dictionary = vocab
-        self.tensor_transform = torchtext.transforms.ToTensor()
 
     def __call__(self,input_tokens:str):
         print(type(input_tokens))
         if type(input_tokens)=='str':
             input_tokens = Simple_Tokenizer(input_tokens)
         output = [self.vocabulary_dictionary[x] if x in self.vocabulary_dictionary else 0 for x in input_tokens]
-        output = self.tensor_transform(output)
         return output
 
