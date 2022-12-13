@@ -9,6 +9,7 @@ from torchtext.transforms import SentencePieceTokenizer
 from torchtext.vocab import build_vocab_from_iterator
 
 import pytorch_lightning as pl
+from pytorch_lightning.loggers.csv_logs import CSVLogger
 
 #SkLearn
 from sklearn.preprocessing import LabelEncoder
@@ -33,9 +34,10 @@ model_parameters = dict(
     dropout = 0.2,
     learning_rate = 0.001,
     criterion = nn.CrossEntropyLoss(),
-    max_epochs = 10,
+    max_epochs = 1,
     n_features = 7,
-    shuffle = True
+    shuffle = True,
+    num_workers = 1,
 )
 
 other_parameters = dict(
@@ -43,46 +45,54 @@ other_parameters = dict(
     tokenizer = torchtext.data.utils.get_tokenizer('basic_english'),
 )
 
-def __main__():
+#def __main__():
 
-    data = Dataset(other_parameters['ref_doc_path'],
-                   other_parameters['tokenizer']
-                   )
+print('Retrieving dataset.')
+data = Dataset(ref_doc_path = other_parameters['ref_doc_path'],
+               tokenizer = other_parameters['tokenizer'],
+               debug_flag = False
+               )
 
-    pp = preprocessor(model_parameters['embedding_size'],
-                      data.vocab,
-                      other_parameters['tokenizer']
-                      )
+print('Initializing preprocessor.')
+pp = preprocessor(tensor_size=model_parameters['embedding_size'],
+                  vocab=data.vocab,
+                  tokenizer=other_parameters['tokenizer']
+                  )
 
-    data_module = DataModule(pp.preprocess(),
-                             model_parameters['seq_len'],
-                             model_parameters['batch_size'],
-                             model_parameters['num_workers'],
-                             model_parameters['shuffle']
-                             )
+print('Running DataModule setup.')
+data_module = DataModule(data.text_array,
+                         data.label_array,
+                         pp,
+                         model_parameters['seq_len'],
+                         model_parameters['batch_size'],
+                         model_parameters['num_workers'],
+                         model_parameters['shuffle']
+                         )
 
-    model = LSTM_Classifier(model_parameters['embedding_size'],
-                            model_parameters['hidden_size'],
-                            model_parameters['seq_len'],
-                            model_parameters['batch_size'],
-                            model_parameters['num_layers'],
-                            model_parameters['dropout'],
-                            model_parameters['learning_rate'],
-                            model_parameters['criterion']
-                            )
+print('Initializing model.')
+model = LSTM_Classifier(model_parameters['embedding_size'],
+                        model_parameters['hidden_size'],
+                        model_parameters['seq_len'],
+                        model_parameters['batch_size'],
+                        model_parameters['num_layers'],
+                        model_parameters['dropout'],
+                        model_parameters['learning_rate'],
+                        model_parameters['criterion']
+                        )
 
-    trainer = pl.Trainer(
-        accelerator="auto",
-        max_epochs=model_parameters['max_epochs'],
-        accumulate_grad_batches=model_parameters['batch_size'] // datamodule.hparams.batch_size,
-        callbacks=[
-            Logging(datamodule.val_set.reference_images[0], args.predefined_model),
-            TransferLearning(args.max_epochs // 2),
-            KAdjustment(args.max_epochs // 2),
-            AccuracyMeasurement(args.predefined_model, every_n_epochs=None, supertype_card_reference=supertype_card_reference)
-        ],
-        fast_dev_run=args.debug,
-        strategy=pl.strategies.DDPStrategy(find_unused_parameters=False)
-    )
+csv_logger = CSVLogger('./', name='lstm', version='0'),
 
-    trainer.fit(model, datamodule=data_module)
+print('Initializing trainer.')
+trainer = pl.Trainer(
+    max_epochs=model_parameters['max_epochs'],
+    logger=csv_logger,
+    #gpus=1,
+    #row_log_interval=1,
+    #progress_bar_refresh_rate=2,
+)
+
+print('Fitting trainer.')
+trainer.fit(model, datamodule=data_module)
+print('Testing.')
+trainer.test(model, datamodule=data_module)
+

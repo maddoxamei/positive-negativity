@@ -1,24 +1,23 @@
-import os
-import numpy as np
-from typing import Optional, Dict, List, Tuple
+#Torch
+import torch
+import torchtext
 
 import pytorch_lightning as pl
-import torch
 
 #sklearn
-
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
-import torchtext
+#Standard
+import os
+import numpy as np
 import pandas as pd
-
-from main import *
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self,
                  ref_doc_path: str,
-                 tokenizer=torchtext.data.utils.get_tokenizer('basic_english')
+                 tokenizer=torchtext.data.utils.get_tokenizer('basic_english'),
+                 debug_flag = False
                  ):
 
         self.documents = [
@@ -38,6 +37,7 @@ class Dataset(torch.utils.data.Dataset):
         self.label_array = np.empty(0)
         self.vocab = {}
 
+        self.debug_flag = debug_flag
         self.setup()
 
         self.label_encoder = LabelEncoder()
@@ -69,17 +69,19 @@ class Dataset(torch.utils.data.Dataset):
         flat_list = (flat_list[flat_list > 5]).index.to_numpy()
         int_list = np.array(range(len(flat_list))) + 1
 
-        #if debug: #Not implemented yet
-        flat_list = flat_list[0:100]
-        self.label_array = self.label_array[0:100]
-        int_list = int_list[0:100]
+        if self.debug_flag:
+            flat_list = flat_list[0:100]
+            self.label_array = self.label_array[0:100]
+            int_list = int_list[0:100]
 
         self.vocab = dict(zip(flat_list, int_list))
         return(self.text_array,self.label_array,self.vocab)
 
 class DataModule(pl.LightningDataModule):
-    def __init__(self, text_preprocess, seq_len = 1, batch_size = 128, num_workers=0, shuffle = False):
+    def __init__(self, text_array,label_array,text_preprocessor, seq_len = 1, batch_size = 128, num_workers=0, shuffle = False):
         super().__init__()
+        self.text_array = text_array
+        self.label_array = label_array
         self.seq_len = seq_len
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -92,7 +94,7 @@ class DataModule(pl.LightningDataModule):
         self.X_test = None
         self.X_test = None
         self.columns = None
-        self.text_preprocess = text_preprocess
+        self.text_preprocess = text_preprocessor
 
     def setup(self, stage=None):
         # X = self.df[['text','index']]
@@ -113,13 +115,13 @@ class DataModule(pl.LightningDataModule):
         )
 
         if stage == 'fit' or stage is None:
-            self.X_train = self.text_preprocess(X_train)
+            self.X_train = self.text_preprocessor.preprocess(X_train)
             self.Y_train = Y_train.values.reshape((-1, 1))
-            self.X_val = self.text_preprocess(X_val)
+            self.X_val = self.text_preprocessor.preprocess(X_val)
             self.Y_val = Y_val.values.reshape((-1, 1))
 
         if stage == 'test' or stage is None:
-            self.X_test = self.text_preprocess(X_test)
+            self.X_test = self.text_preprocessor.preprocess(X_test)
             self.Y_test = Y_test.values.reshape((-1, 1))
 
 
