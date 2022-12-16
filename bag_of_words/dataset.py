@@ -43,7 +43,7 @@ class Dataset(torch.utils.data.Dataset):
             clause = file.readlines()[relative_idx]
         tokens = self.tokenizer(clause)
 
-        label = os.path.basename(self.documents[document_index]).split('_')[-2][relative_idx]
+        label = os.path.basename(self.documents[document_index]).split('_', maxsplit=2)[1][relative_idx]
         label = self.label_encoder.transform([[label]])
 
         return torch.as_tensor(self.token_encoder.transform(tokens)), len(tokens), torch.as_tensor(label)
@@ -60,7 +60,7 @@ class Dataset(torch.utils.data.Dataset):
 
         #Iterate through each document, tokenizing as a set of clauses.
         for doc in self.documents:
-            labels.update(list(os.path.basename(doc).split('_')[-2]))
+            labels.update(list(os.path.basename(doc).split('_', maxsplit=2)[1]))
             with open(doc, 'r') as file:
                 clauses = file.readlines()
             # Associate clause indexes to a particular document index
