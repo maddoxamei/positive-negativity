@@ -1,0 +1,77 @@
+import torch
+import pytorch_lightning as pl
+import torch
+import torch.nn as nn
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from torch.autograd import Variable
+
+
+class LSTM_Classifier(pl.LightningModule):
+    def __init__(self,
+                 vocab_size,
+                 embedding_size,
+                 hidden_size,
+                 num_layers,
+                 output_size,
+                 dropout,
+                 learning_rate,
+                 **kwargs):
+
+        super().__init__()
+        self.save_hyperparameters()
+        self.hparams.dropout = dropout if num_layers > 1 else 0.0
+        self.criterion = nn.BCELoss() if output_size == 1 else nn.CrossEntropyLoss()
+        self.embedding = nn.Embedding(vocab_size, embedding_size, padding_idx=0)
+        self.lstm = nn.LSTM(input_size=embedding_size,
+                            hidden_size=hidden_size,
+                            num_layers=num_layers,
+                            dropout=self.hparams.dropout,
+                            batch_first=True)
+        self.linear = nn.Linear(hidden_size, output_size)
+
+    def forward(self, text, text_lengths=None):
+        """
+
+        :param text: padded batch of variable length encoded text (B T *)
+        :param text_lengths: list of text lengths of each batch element
+        :return:
+        """
+        print(text.shape)
+        text = self.embedding(text)
+        print(text.shape)
+
+        batch_size = text.size(0)
+        h_0 = Variable(torch.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size))
+        c_0 = Variable(torch.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size))
+        # h_0 = Variable(torch.randn(1, batch_size, self.hparams.hidden_size))
+        # c_0 = Variable(torch.randn(1, batch_size, self.hparams.hidden_size))
+
+        packed_input = pack_padded_sequence(text, text_lengths, batch_first=True, enforce_sorted=False)
+        packed_output, _ = self.lstm(packed_input, (h_0, c_0))
+        output, _ = pad_packed_sequence(packed_output, batch_first=True)
+
+        text_features = self.linear(output[:, -1])
+        print(text_features.shape)
+        # if len(text_features.shape) == 3:
+        #     text_features = text_features.squeeze(1)
+
+        return torch.sigmoid(text_features)
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
+
+    def training_step(self, batch, batch_idx):
+        x, clause_lengths, y = batch
+        y_hat = self.forward(x, clause_lengths)
+        print(y.shape, y_hat.shape)
+        loss = self.criterion(y_hat.type(torch.float32), y.type(torch.float32))
+        # TODO: log los
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, clause_lengths, y = batch
+        y_hat = self.forward(x, clause_lengths)
+        print(y.shape, y_hat.shape)
+        loss = self.criterion(y_hat.type(torch.float32), y.type(torch.float32))
+        # TODO: log los
+        return loss

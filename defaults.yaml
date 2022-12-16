@@ -1,0 +1,17 @@
+model:
+  embedding_size: 1000
+  hidden_size: 100
+  num_layers: 1
+  dropout: 0.2
+  learning_rate: 0.001
+
+trainer:
+  max_epochs: 2
+
+datamodule:
+  fit_doc_path: ../data/reviews
+  tokenizer: basic_english
+  batch_size: 32
+  num_workers: 0
+  train_split: 0.8
+  stopword_language: english
