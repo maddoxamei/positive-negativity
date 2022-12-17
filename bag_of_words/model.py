@@ -14,18 +14,16 @@ class LSTM_Classifier(pl.LightningModule):
                  num_layers,
                  output_size,
                  dropout,
-                 learning_rate,
-                 **kwargs):
+                 learning_rate):
 
         super().__init__()
         self.save_hyperparameters()
-        self.hparams.dropout = dropout if num_layers > 1 else 0.0
         self.criterion = nn.BCELoss() if output_size == 1 else nn.CrossEntropyLoss()
         self.embedding = nn.Embedding(vocab_size, embedding_size, padding_idx=0)
         self.lstm = nn.LSTM(input_size=embedding_size,
                             hidden_size=hidden_size,
                             num_layers=num_layers,
-                            dropout=self.hparams.dropout,
+                            dropout=dropout,
                             batch_first=True)
         self.linear = nn.Linear(hidden_size, output_size)
 
@@ -36,9 +34,7 @@ class LSTM_Classifier(pl.LightningModule):
         :param text_lengths: list of text lengths of each batch element
         :return:
         """
-        print(text.shape)
         text = self.embedding(text)
-        print(text.shape)
 
         batch_size = text.size(0)
         h_0 = Variable(torch.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size))
@@ -51,7 +47,6 @@ class LSTM_Classifier(pl.LightningModule):
         output, _ = pad_packed_sequence(packed_output, batch_first=True)
 
         text_features = self.linear(output[:, -1])
-        print(text_features.shape)
         # if len(text_features.shape) == 3:
         #     text_features = text_features.squeeze(1)
 
@@ -63,7 +58,6 @@ class LSTM_Classifier(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, clause_lengths, y = batch
         y_hat = self.forward(x, clause_lengths)
-        print(y.shape, y_hat.shape)
         loss = self.criterion(y_hat.type(torch.float32), y.type(torch.float32))
         # TODO: log los
         return loss
@@ -71,7 +65,6 @@ class LSTM_Classifier(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         x, clause_lengths, y = batch
         y_hat = self.forward(x, clause_lengths)
-        print(y.shape, y_hat.shape)
         loss = self.criterion(y_hat.type(torch.float32), y.type(torch.float32))
         # TODO: log los
         return loss

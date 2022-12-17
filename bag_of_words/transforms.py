@@ -2,6 +2,7 @@ import re
 from typing import List, Union, Hashable, Set, NoReturn
 
 import nltk
+import torchtext
 from stopwords import get_stopwords
 import numpy as np
 
@@ -123,4 +124,13 @@ class Tokenizer(object):
         p = re.compile(r"(?<=\snot)(\s+\w+)+([^\w\s\'<>]|$)", flags=re.IGNORECASE)
 
 
+def get_sentences(text: str) -> List[str]:
+    """
 
+    :param text:
+    :return: clauses associated with the input text
+    """
+    # Identify sentences via "\n.", "!", "?", ";" in addition to the contextually Identify sentences via "."
+    tokenizer = nltk.RegexpTokenizer('(?:[.]{1}\n)|[!?;]', gaps=True)
+    sentences = nltk.sent_tokenize(text)
+    return sentences

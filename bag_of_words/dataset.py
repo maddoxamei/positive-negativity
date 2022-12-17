@@ -40,7 +40,7 @@ class Dataset(torch.utils.data.Dataset):
         relative_idx = clause_idx - n_clauses
 
         with open(self.documents[document_index], 'r') as file:
-            clause = file.readlines()[relative_idx]
+            clause = get_sentences(file.read())[relative_idx]
         tokens = self.tokenizer(clause)
 
         label = os.path.basename(self.documents[document_index]).split('_', maxsplit=2)[1][relative_idx]
@@ -62,7 +62,7 @@ class Dataset(torch.utils.data.Dataset):
         for doc in self.documents:
             labels.update(list(os.path.basename(doc).split('_', maxsplit=2)[1]))
             with open(doc, 'r') as file:
-                clauses = file.readlines()
+                clauses = get_sentences(file.read())
             # Associate clause indexes to a particular document index
             new_index = clause_to_document_index[-1] + len(clauses)
             clause_to_document_index.append(new_index)
