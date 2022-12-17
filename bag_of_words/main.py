@@ -7,7 +7,7 @@ from model import *
 from transforms import *
 
 
-debug_flag = True
+debug_flag = False
 
 if __name__ == '__main__':
     with open('../defaults.yaml', 'r') as file:
@@ -24,4 +24,4 @@ if __name__ == '__main__':
     )
 
     trainer.fit(model, datamodule=datamodule)
-
+    torch.save(model.state_dict(), 'model.pt')
