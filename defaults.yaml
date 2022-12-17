@@ -9,7 +9,7 @@ trainer:
   max_epochs: 2
 
 datamodule:
-  fit_doc_path: ../data/reviews
+  fit_doc_path: ../data/IMDB_reviews
   tokenizer: basic_english
   batch_size: 32
   num_workers: 0

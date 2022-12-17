@@ -10,7 +10,7 @@ from transforms import *
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self,
-                 ref_doc_path: str,
+                 fit_doc_path: str,
                  tokenizer: str,
                  stopword_language: str,
                  vad_lexicon_file: str,
@@ -18,8 +18,8 @@ class Dataset(torch.utils.data.Dataset):
                  **kwargs
                  ):
         self.documents = [
-            os.path.join(ref_doc_path, path)
-            for path in os.listdir(ref_doc_path)
+            os.path.join(fit_doc_path, path)
+            for path in os.listdir(fit_doc_path)
             if path.endswith((".txt"))
         ]
         self.tokenizer = Tokenizer(torchtext.data.utils.get_tokenizer(tokenizer), stopword_language)

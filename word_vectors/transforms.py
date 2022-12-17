@@ -14,7 +14,7 @@ class WordVectorEncoder(object):
     NRC Valence, Arousal, Dominance (VAD) lexicon
     GloVe: Global Vectors for Word Representation
     """
-    def __init__(self, vad_lexicon_file: str, glove_lexicon_file: str, k: int = 5) -> NoReturn:
+    def __init__(self, vad_lexicon_file: str, glove_lexicon_file: str, k: int = 5, **kwargs) -> NoReturn:
         """
         :param unknown_token: token for unknown words which may be encountered during testing
         """
@@ -150,7 +150,7 @@ class Tokenizer(object):
         #   (e.g. mid-1990 to "mid 1990" or "It's a wonderful day!" "It's a wonderful day ! ")
         clause = re.sub(
             r"(?<!<hyp)(?<!<dec)(?<!<email)(?<!<num)(?<!<time)(?<!<mention)([^\w\s\d\'])(?!hyp>|dec>|email>|num>|time>|mention>)",
-            r' \1 ', "Although I like cheese, eggs, and bacon, I'd prefer veggies the most")
+            r' \1 ', clause)
         return clause
 
     def remove_pseudowords(self, clause: str) -> str:
