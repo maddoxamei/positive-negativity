@@ -22,15 +22,15 @@ def clause_parsing(doc):
         return doc
     for i, token in enumerate(doc[:-2]):
         if token.tag_ in ('CC', 'IN') and doc[max(i-1, 0)].tag_ != doc[i+1].tag_:
-            # split the document at the conjunction if occurring in the middle of the sentence
-            if i != 0:
-                doc[i+1].is_sent_start = True
-            # split the document at the following punctuation (due to tokenization process, this excludes \'
-            else:
+            # split the document at the following punctuation (due to tokenization process, this excludes apostrophes)
+            if doc[max(i - 1, 0)].is_sent_start or doc[max(i - 1, 0)].is_punct:
                 for j in range(i, len(doc)):
                     if doc[j].is_punct:
                         doc[j+1].is_sent_start = True
                         break
+            # split the document at the conjunction if occurring in the middle of the sentence
+            if not (doc[max(i-1, 0)].is_sent_start or doc[max(i-1, 0)].is_punct):
+                doc[i+1].is_sent_start = True
     return doc
 
 @spacy.Language.component('negation')

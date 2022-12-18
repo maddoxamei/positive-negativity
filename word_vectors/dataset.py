@@ -7,6 +7,8 @@ import pytorch_lightning as pl
 import os
 import numpy as np
 from transforms2 import *
+from word_vectors.transforms import TextProcessor
+
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self,
@@ -60,7 +62,6 @@ class Dataset(torch.utils.data.Dataset):
         #Iterate through each document, tokenizing as a set of clauses.
         for doc in self.documents:
             labels.add(os.path.basename(doc).rsplit('_', maxsplit=2)[1])
-            print(labels)
             with open(doc, 'r') as file:
                 clauses = self.text_processor.get_sentences(file.read())
             # Associate clause indexes to a particular document index

@@ -13,7 +13,7 @@ class TextProcessor(object):
     """Preprocess data and handle edge-cases present in the training/test corpus.
 
         Cleanup process does NOT include token/word standardization."""
-    def __init__(self, vad_lexicon_file: str, glove_searchspace_file: str, k: int = 5, **kwargs) -> None:
+    def __init__(self, vad_lexicon_file: str, glove_searchspace_file: str, k: int = 10, **kwargs) -> None:
         self.k = k
 
         logging.info("Creating a vector database of the NRC Valence-Arousal-Dominance Lexicon")
@@ -78,7 +78,7 @@ class TextProcessor(object):
         polarization_thresh = np.asarray(polarization_thresh)
         return [token for token in obj if
                 not token.is_punct and not (token._.is_pseudo and remove_pseudowords) and not (
-                            token.is_stop and remove_stopwords) and np.all(token._.vad_vector.abs() >= polarization_thresh)]
+                            token.is_stop and remove_stopwords) and np.all(np.abs(token._.vad_vector) >= polarization_thresh)]
 
     def _space_formatting(self, text: str) -> str:
         # substitute newline character and "p"/"b" tags with space
@@ -95,7 +95,8 @@ class TextProcessor(object):
 
     def _get_filled_vectors(self, obj: Union[spacy.tokens.Doc, spacy.tokens.Span]):
         vectors = np.asarray([token._.get('vad_vector') for token in obj])
-        return np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
+        vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
+        return np.nan_to_num(vectors)
         # vectors = []
         # for token in obj:
         #     vector = token._.get('vad_vector')
@@ -103,7 +104,8 @@ class TextProcessor(object):
         #         vector = self._handle_unknowns(token)
         #     vectors.append(vector)
         # vectors = np.asarray(vectors)
-        # return np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
+        # vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
+        # return np.nan_to_num(vectors)
 
     def _handle_unknowns(self, token: spacy.tokens.Token) -> np.ndarray:
         """
