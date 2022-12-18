@@ -43,6 +43,20 @@ def sentence_extremity(embeddings):
         df.append(ext_val)
     return(pd.DataFrame(df))
 
+def sentence_extremity(embeddings):
+    """
+
+    :param embeddings:
+    :return: A dataframe of VAD values.  Average VAD is returned per sentence, after removal of "neutral" words
+    """
+    df = []
+    for i in embeddings:
+        nump = i.numpy()
+        polars_mask = nump.abs() > 0.5
+        polars = nump[polars_mask]
+        df.append(polars.mean(axis=1))
+    return(pd.DataFrame(df))
+
 def thwarting_predictor(embeddings):
     """
     Predicts if a text is thwarting or not based on valence of the first 4/5th of the text VS the last 1/5.
