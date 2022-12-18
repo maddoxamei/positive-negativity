@@ -96,11 +96,9 @@ class DataModule(pl.LightningDataModule):
         :param batch: e.g. [(tensor([4, 7, 2]), 3), (tensor([16,  9,  5, 14]), 4)]
         :return: e.g.
         """
-        # Separate clauses and their respective lengths into separate variables
-        #   clauses: [tensor([4, 7, 2]), tensor([16,  9,  5, 14])]
-        #   lengths: [3, 4]
         clauses, lengths, labels = zip(*batch)
-        return torch.stack(clauses).type(torch.float32), lengths, torch.stack(labels).squeeze(1).type(torch.float32)
+        padded_clauses = pad_sequence(clauses, batch_first=True)
+        return padded_clauses.type(torch.float32), lengths, torch.stack(labels).squeeze(1).type(torch.float32)
 
     def train_dataloader(self) -> "TRAIN_DATALOADERS":
         return torch.utils.data.DataLoader(self.train_set,
