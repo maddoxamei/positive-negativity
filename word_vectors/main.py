@@ -1,6 +1,6 @@
 import yaml
 
-from dataset import *
+from dataset_per_document import *
 from model import *
 
 debug_flag = True

@@ -1,44 +1,9 @@
-import numpy as np
 import os
-import torch
-import math
 
-from word_vectors.transforms import *
+from transforms import *
+from utils import *
 from glob import glob
-processor = TextProcessor('data/lexicons/NRC-VAD-Lexicon.txt', 'data/lexicons/glove.6B.50d.pickle')
 
-def get_doc_sentences(path):
-    with open(path, 'r') as file:
-        return processor.get_sentences(file.read())
-
-def get_embeddings(sentences):
-    """
-
-    :param document_index:
-    :return:
-    """
-    embedded_sents = []
-    for sent in sentences:
-        embedding = processor.get_token_embeddings(sent, remove_pseudowords=True, remove_stopwords=True, polarization_thresh=(.5,.1,.1))
-        if len(embedding) > 0:
-            embedded_sents.append(np.asarray(embedding))
-    return embedded_sents
-
-def valence_extremity(embedded_sent):
-    max_valence_index = np.argmax(embedded_sent[:, 0])
-    return embedded_sent[max_valence_index]
-
-def dimension_average(embedded_sent):
-    return np.mean(embedded_sent, axis=0)
-
-def get_sentence_vectors(embedded_sentences, reduction_function=dimension_average):
-    """Get sentence-level metrics"""
-    sentence_vectors = np.asarray([reduction_function(sent) for sent in embedded_sentences])
-    # Look at both valence and arousal when determining sentiment
-    sentence_vectors = sentence_vectors[:, 0]*sentence_vectors[:, 1]
-    # Just look at valence when determining sentiment
-    # sentence_vectors = sentence_vectors[:, 0]
-    return sentence_vectors
 
 def get_sections(sentence_vectors):
     four_fifths = int(len(sentence_vectors) * 4 / 5)
@@ -83,12 +48,13 @@ def get_document_sentiment(sentence_vectors, threshold=.2):
 
 
 documents = list(glob('data/IMDB_reviews/*.txt'))
-
+processor = TextProcessor('data/lexicons/NRC-VAD-Lexicon.txt', 'data/lexicons/glove.6B.50d.pickle')
 strDir = r'C:\File\GitHub\positive-negativity'
+
 for iter,doc_string in enumerate(documents):
     print(doc_string)
-    sentences = get_doc_sentences(doc_string)
-    embeddings = get_embeddings(sentences)
+    sentences = get_doc_sentences(doc_string, processor)
+    embeddings = get_embeddings(sentences, processor)
     sentence_vectors = get_sentence_vectors(embeddings)
     result = get_document_sentiment(sentence_vectors)
     # not sure what you were wanting to print and why

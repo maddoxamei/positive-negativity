@@ -6,8 +6,8 @@ from sklearn.preprocessing import OneHotEncoder
 import pytorch_lightning as pl
 import os
 import numpy as np
-from transforms2 import *
-from word_vectors.transforms import TextProcessor
+from transforms import *
+from utils import *
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -23,55 +23,37 @@ class Dataset(torch.utils.data.Dataset):
             if path.endswith((".txt"))
         ]
         self.text_processor = TextProcessor(vad_lexicon_file+'.txt', glove_lexicon_file+'.pickle')
-        self.clause_to_document_index, self.label_encoder = self.setup()
+        self.label_encoder = self.setup()
 
     def __len__(self) -> int:
-        return self.clause_to_document_index[-1]
+        return len(self.documents)
 
-    def __getitem__(self, clause_idx: int):
+    def __getitem__(self, idx: int):
         """
 
         :param clause_idx: desired clause index, NOT document index
         :return:
         """
-        document_index = np.argmax(self.clause_to_document_index > clause_idx)
-        # Handles edge case of obtaining relative indexes from the first document
-        n_clauses = self.clause_to_document_index[max(0, document_index-1)]
-        # relative clause index within the document that contains it
-        relative_idx = clause_idx - n_clauses
 
-        with open(self.documents[document_index], 'r') as file:
-            clause = self.text_processor.get_sentences(file.read())[relative_idx]
-        encoding = torch.as_tensor(clause._.vad_vector.astype(np.float32))
+        sentences = get_doc_sentences(self.documents[idx], self.text_processor)
+        embeddings = get_embeddings(sentences, self.text_processor)
+        sentence_vectors = get_sentence_vectors(embeddings) # np.ndarray of shape (NUM_OF_SENTENCES, )
+        sentence_vectors = np.expand_dims(sentence_vectors, 1) # np.ndarray of shape (NUM_OF_SENTENCES, )
 
-        label = os.path.basename(self.documents[document_index]).rsplit('_', maxsplit=2)[1]
+        label = os.path.basename(self.documents[idx]).rsplit('_', maxsplit=2)[1]
         label = self.label_encoder.transform([[label]])
 
-        return encoding, encoding.size(0), torch.as_tensor(label)
+        return torch.as_tensor(sentence_vectors).type(torch.float32), len(sentence_vectors), torch.as_tensor(label).type(torch.float32)
 
     def setup(self):
-        vocabulary = set([])  # set ensures duplicates are not created when adding new elements
         labels = set([])
-        """
-        The LSTM classifies clauses. Therefore we want a dataset of clauses, NOT a dataset of documents.
-        However since a single document can have multiple clauses, we need to keep track of which document contains which subset of clauses.
-        We track this by keeping an ordered cumulative sum of clauses in new_index[]
-        """
-        clause_to_document_index = [0]
-
-        #Iterate through each document, tokenizing as a set of clauses.
         for doc in self.documents:
             labels.add(os.path.basename(doc).rsplit('_', maxsplit=2)[1])
-            with open(doc, 'r') as file:
-                clauses = self.text_processor.get_sentences(file.read())
-            # Associate clause indexes to a particular document index
-            new_index = clause_to_document_index[-1] + len(clauses)
-            clause_to_document_index.append(new_index)
 
         label_encoder = OneHotEncoder(drop='if_binary', sparse_output=False)
         label_encoder.fit(np.asarray(sorted(labels)).reshape((-1, 1)))
 
-        return np.asarray(clause_to_document_index[1:]), label_encoder
+        return label_encoder
 
 
 class DataModule(pl.LightningDataModule):
@@ -95,9 +77,9 @@ class DataModule(pl.LightningDataModule):
         :param batch: e.g. [(tensor([4, 7, 2]), 3), (tensor([16,  9,  5, 14]), 4)]
         :return: e.g.
         """
-        clauses, lengths, labels = zip(*batch)
-        padded_clauses = pad_sequence(clauses, batch_first=True)
-        return padded_clauses.type(torch.float32), lengths, torch.stack(labels).squeeze(1).type(torch.float32)
+        documents, lengths, labels = zip(*batch)
+        padded_documents = pad_sequence(documents, batch_first=True)
+        return padded_documents, lengths, torch.stack(labels).squeeze(1)
 
     def train_dataloader(self) -> "TRAIN_DATALOADERS":
         return torch.utils.data.DataLoader(self.train_set,
