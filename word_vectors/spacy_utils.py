@@ -6,7 +6,7 @@ import spacy
 import re
 
 additional_sentence_boundaries: List[str] = [';']
-negation_words: Union[List[str], Set[str]] = ["not"]
+negation_words: Union[List[str], Set[str]] = ["not", "no"]
 
 @spacy.Language.component('sentence_punctuation')
 def additional_sentence_parsing(doc):
