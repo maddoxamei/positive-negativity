@@ -24,7 +24,7 @@ def clause_parsing(doc):
         if token.tag_ in ('CC', 'IN') and doc[max(i-1, 0)].tag_ != doc[i+1].tag_:
             # split the document at the following punctuation (due to tokenization process, this excludes apostrophes)
             if doc[max(i - 1, 0)].is_sent_start or doc[max(i - 1, 0)].is_punct:
-                for j in range(i, len(doc)):
+                for j in range(i, len(doc)-1):
                     if doc[j].is_punct:
                         doc[j+1].is_sent_start = True
                         break
@@ -45,7 +45,7 @@ def token_negation(doc):
     """
     for i, token in enumerate(doc):
         if token.lower_ in negation_words:
-            for j in range(i+1, len(doc)):
+            for j in range(i+1, len(doc)-1):
                 if doc[j].is_punct:
                     break
                 doc[j]._.set('is_negated', not token._.get('is_negated'))

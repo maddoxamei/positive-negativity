@@ -8,7 +8,7 @@ from torch.autograd import Variable
 
 class LSTM_Classifier(pl.LightningModule):
     def __init__(self,
-                 embedding_size,
+                 n_input_features,
                  hidden_size,
                  num_layers,
                  output_size,
@@ -19,7 +19,7 @@ class LSTM_Classifier(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.criterion = nn.BCELoss() if output_size == 1 else nn.CrossEntropyLoss()
-        self.lstm = nn.LSTM(input_size=3,
+        self.lstm = nn.LSTM(input_size=n_input_features,
                             hidden_size=hidden_size,
                             num_layers=num_layers,
                             dropout=dropout,
