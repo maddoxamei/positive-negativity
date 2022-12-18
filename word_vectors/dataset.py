@@ -6,13 +6,11 @@ from sklearn.preprocessing import OneHotEncoder
 import pytorch_lightning as pl
 import os
 import numpy as np
-from transforms import *
+from transforms2 import *
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self,
                  fit_doc_path: str,
-                 tokenizer: str,
-                 stopword_language: str,
                  vad_lexicon_file: str,
                  glove_lexicon_file: str,
                  **kwargs
@@ -22,8 +20,7 @@ class Dataset(torch.utils.data.Dataset):
             for path in os.listdir(fit_doc_path)
             if path.endswith((".txt"))
         ]
-        self.tokenizer = Tokenizer(torchtext.data.utils.get_tokenizer(tokenizer), stopword_language)
-        self.token_encoder = WordVectorEncoder(vad_lexicon_file, glove_lexicon_file, **kwargs)
+        self.text_processor = TextProcessor(vad_lexicon_file+'.txt', glove_lexicon_file+'.pickle')
         self.clause_to_document_index, self.label_encoder = self.setup()
 
     def __len__(self) -> int:
@@ -42,13 +39,13 @@ class Dataset(torch.utils.data.Dataset):
         relative_idx = clause_idx - n_clauses
 
         with open(self.documents[document_index], 'r') as file:
-            clause = get_sentences(file.read())[relative_idx]
-        tokens = self.tokenizer(clause)
+            clause = self.text_processor.get_sentences(file.read())[relative_idx]
+        encoding = torch.as_tensor(clause._.vad_vector.astype(np.float32))
 
-        label = os.path.basename(self.documents[document_index]).split('_', maxsplit=2)[1][relative_idx]
+        label = os.path.basename(self.documents[document_index]).rsplit('_', maxsplit=2)[1]
         label = self.label_encoder.transform([[label]])
 
-        return torch.as_tensor(self.token_encoder.transform(tokens)), len(tokens), torch.as_tensor(label)
+        return encoding, encoding.size(0), torch.as_tensor(label)
 
     def setup(self):
         vocabulary = set([])  # set ensures duplicates are not created when adding new elements
@@ -62,9 +59,10 @@ class Dataset(torch.utils.data.Dataset):
 
         #Iterate through each document, tokenizing as a set of clauses.
         for doc in self.documents:
-            labels.update(list(os.path.basename(doc).split('_', maxsplit=2)[1]))
+            labels.add(os.path.basename(doc).rsplit('_', maxsplit=2)[1])
+            print(labels)
             with open(doc, 'r') as file:
-                clauses = get_sentences(file.read())
+                clauses = self.text_processor.get_sentences(file.read())
             # Associate clause indexes to a particular document index
             new_index = clause_to_document_index[-1] + len(clauses)
             clause_to_document_index.append(new_index)

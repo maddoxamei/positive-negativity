@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import os
 import torch
@@ -5,13 +6,12 @@ import math
 
 from word_vectors.transforms import *
 from glob import glob
-encoder = WordVectorEncoder('data/lexicons/NRC-VAD-Lexicon.txt', 'data/lexicons/glove.6B.50d.txt')
-tokenizer = Tokenizer(torchtext.data.utils.get_tokenizer('basic_english'), 'english')
+processor = TextProcessor('data/lexicons/NRC-VAD-Lexicon.txt', 'data/lexicons/glove.6B.50d.pickle')
 documents = list(glob('data/IMDB_reviews/*.txt'))
 
 def get_doc_sentences(path):
     with open(path, 'r') as file:
-        return get_sentences(file.read())
+        return processor(file.read())
 
 def get_embeddings(sentences):
     """
@@ -19,13 +19,11 @@ def get_embeddings(sentences):
     :param document_index:
     :return: torch.Size([49, 8, 3])
     """
-    embeddings = []
+    embedded_sents = []
     for sent in sentences:
-        tokens = tokenizer(sent, False, True)
-        encoding = torch.as_tensor(encoder(tokens))
-        #print(len(tokens), encoding.shape)
-        embeddings.append(encoding)
-    return embeddings
+        embedding = processor.get_token_embeddings(sent, remove_pseudowords=True, remove_stopwords=True, polarization_thresh=(.5,.1,,1))
+        embedded_sents.append(np.asarray(embedding))
+    return embedded_sents
 
 def sentence_extremity(embeddings):
     """
@@ -43,19 +41,6 @@ def sentence_extremity(embeddings):
         df.append(ext_val)
     return(pd.DataFrame(df))
 
-def sentence_extremity(embeddings):
-    """
-
-    :param embeddings:
-    :return: A dataframe of VAD values.  Average VAD is returned per sentence, after removal of "neutral" words
-    """
-    df = []
-    for i in embeddings:
-        nump = i.numpy()
-        polars_mask = nump.abs() > 0.5
-        polars = nump[polars_mask]
-        df.append(polars.mean(axis=1))
-    return(pd.DataFrame(df))
 
 def thwarting_predictor(embeddings):
     """
