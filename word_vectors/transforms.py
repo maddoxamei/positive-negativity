@@ -65,20 +65,23 @@ class TextProcessor(object):
         return [token._.vad_vector for token in self.get_token_obj(obj, **kwargs)]
 
     def _filter_tokens(self, obj: Union[spacy.tokens.Doc, spacy.tokens.Span], remove_pseudowords: bool = False,
-                       remove_stopwords: bool = True, polarization_thresh: Tuple[float, float, float] = (0, 0, 0)) -> List[spacy.tokens.Token]:
+                       remove_stopwords: bool = True, polarization_thresh: Tuple[float, float, float] = (0, 0, 0),
+                       neutral: Tuple[float, float, float] = (0.5, 0.5, 0.5)) -> List[spacy.tokens.Token]:
         """ Return non-punctuation tokens __ with pseudowords and stopwords removed if desired
 
         :param obj:
         :param remove_pseudowords:
         :param remove_stopwords:
+        :param polarization_thresh: how-far away from "neutral" (.5) a dimension must be to include the word in the sentence
         :return:
         """
         if isinstance(obj, str):
             obj = self.__call__(obj)
         polarization_thresh = np.asarray(polarization_thresh)
+        neutral = np.asarray(neutral)
         return [token for token in obj if
                 not token.is_punct and not (token._.is_pseudo and remove_pseudowords) and not (
-                            token.is_stop and remove_stopwords) and np.all(np.abs(token._.vad_vector) >= polarization_thresh)]
+                            token.is_stop and remove_stopwords) and np.all(np.abs(token._.vad_vector-neutral) >= polarization_thresh)]
 
     def _space_formatting(self, text: str) -> str:
         # substitute newline character and "p"/"b" tags with space
@@ -90,7 +93,7 @@ class TextProcessor(object):
     def _get_vad_representation(self, token: spacy.tokens.Token):
         vector = self.vad_lexicon.get(token.lemma_.lower(), np.array([np.nan, np.nan, np.nan]))
         if token._.is_negated:
-            return vector*np.array([-1, 1, 1])
+            return np.array([1-vector[0], vector[1], vector[2]])
         return vector
 
     def _get_filled_vectors(self, obj: Union[spacy.tokens.Doc, spacy.tokens.Span]):

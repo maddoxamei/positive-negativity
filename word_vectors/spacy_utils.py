@@ -45,7 +45,7 @@ def token_negation(doc):
     """
     for i, token in enumerate(doc):
         if token.lower_ in negation_words:
-            for j in range(i+1, len(doc)-1):
+            for j in range(i+1, len(doc)):
                 if doc[j].is_punct:
                     break
                 doc[j]._.set('is_negated', not token._.get('is_negated'))
