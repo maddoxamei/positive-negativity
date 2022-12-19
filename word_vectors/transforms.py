@@ -86,7 +86,7 @@ class TextProcessor(object):
     def _space_formatting(self, text: str) -> str:
         # substitute newline character and "p"/"b" tags with space
         text = re.sub(r'<\s*[/]?\s*p>|<\s*[/]?\s*b>|\n', ' ', text)
-        # Separate num. from letters (e.g. "2PM" to "2 PM", "<num>PM" to "<num> PM")
+        # Separate num. from letters (e.g. "2PM" to "2 PM")
         text = re.sub(r'(\d)(\D)', r'\1 \2', text)
         return text
 

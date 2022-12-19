@@ -34,7 +34,6 @@ class Dataset(torch.utils.data.Dataset):
         :param clause_idx: desired clause index, NOT document index
         :return:
         """
-
         sentences = get_doc_sentences(self.documents[idx], self.text_processor)
         embeddings = get_embeddings(sentences, self.text_processor)
         sentence_vectors = get_sentence_vectors(embeddings) # np.ndarray of shape (NUM_OF_SENTENCES, )

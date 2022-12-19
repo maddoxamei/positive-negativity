@@ -10,6 +10,10 @@ def get_sections(sentence_vectors):
     return sentence_vectors[:four_fifths], sentence_vectors[four_fifths:]
 
 def get_section_sentiment(section_average):
+    """
+    :param section_average:
+    :return: True if postive, False if negative
+    """
     # When looked at both valence and arousal when determining sentiment
     return bool(section_average > .5*.2)
     # When looked at valence when determining sentiment
@@ -21,7 +25,7 @@ def get_document_sentiment(sentence_vectors, threshold=.2):
     # Entire document sentiment is simply the "first section" sentiment
     # if there is only one sentence in the entire document
     if len(second_section) == 0:
-        return np.mean(first_section).round()
+        return get_section_sentiment(first_section)
 
     # Get section averages
     first_section_average = np.mean(first_section)
@@ -29,8 +33,7 @@ def get_document_sentiment(sentence_vectors, threshold=.2):
 
     # Increases weight of last sentence in longer documents
     if len(second_section) > 2:
-        s1, s2 = get_sections(second_section)
-        second_section_average = np.mean(s1)*np.mean(s2)
+        second_section_average = np.append(second_section, np.repeat(second_section[-1], len(second_section) // 2)).mean()
 
     first_section_sentiment = get_section_sentiment(first_section_average)
     second_section_sentiment = get_section_sentiment(second_section_average)

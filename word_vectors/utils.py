@@ -16,17 +16,20 @@ def get_embeddings(sentences, processor: "word_vectors.transforms.TextProcessor"
     """
     embedded_sents = []
     for sent in sentences:
-        embedding = processor.get_token_embeddings(sent, remove_pseudowords=True, remove_stopwords=True, polarization_thresh=(.5,.1,.1))
+        embedding = processor.get_token_embeddings(sent, remove_pseudowords=True, remove_stopwords=True, polarization_thresh=(.2,.1,.1))
         if len(embedding) > 0:
             embedded_sents.append(np.asarray(embedding))
     return embedded_sents
+
 
 def valence_extremity(embedded_sent, neutral: float = 0.5):
     max_valence_index = np.argmax(np.abs(embedded_sent[:, 0]-neutral))
     return embedded_sent[max_valence_index]
 
+
 def dimension_average(embedded_sent):
     return np.mean(embedded_sent, axis=0)
+
 
 def get_sentence_vectors(embedded_sentences: List[np.ndarray], reduction_function=dimension_average) -> np.ndarray:
     """ Represent sentences as a single number

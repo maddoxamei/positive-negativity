@@ -62,7 +62,7 @@ def identify_pseudowords(doc):
             token.lemma_ = '-NUMBER-'
         elif token.like_url:
             token.lemma_ = '-URL-'
-        elif re.search(r"[\s\b]@(?:\w+[.]?)+", token.text):
+        elif re.search(r"[\s\b]?@(?:\w+[.]?)+", token.lemma_):
             token.lemma_ = '-MENTION-'
 
         if re.search(r'-.+-', token.lemma_) is not None:
