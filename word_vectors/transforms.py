@@ -97,18 +97,18 @@ class TextProcessor(object):
         return vector
 
     def _get_filled_vectors(self, obj: Union[spacy.tokens.Doc, spacy.tokens.Span]):
-        vectors = np.asarray([token._.get('vad_vector') for token in obj])
-        vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
-        return np.nan_to_num(vectors)
-        # vectors = []
-        # for token in obj:
-        #     vector = token._.get('vad_vector')
-        #     if vector is None:
-        #         vector = self._handle_unknowns(token)
-        #     vectors.append(vector)
-        # vectors = np.asarray(vectors)
+        # vectors = np.asarray([token._.get('vad_vector') for token in obj])
         # vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
         # return np.nan_to_num(vectors)
+        vectors = []
+        for token in obj:
+            vector = token._.get('vad_vector')
+            if vector is None:
+                vector = self._handle_unknowns(token)
+            vectors.append(vector)
+        vectors = np.asarray(vectors)
+        vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
+        return np.nan_to_num(vectors)
 
     def _handle_unknowns(self, token: spacy.tokens.Token) -> np.ndarray:
         """

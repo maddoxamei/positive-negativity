@@ -3,7 +3,7 @@ import yaml
 from dataset_per_document import *
 from model import *
 
-debug_flag = True
+debug_flag = False
 
 if __name__ == '__main__':
     with open('../defaults.yaml', 'r') as file:
