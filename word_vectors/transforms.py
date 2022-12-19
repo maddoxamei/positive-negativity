@@ -24,7 +24,7 @@ class TextProcessor(object):
         with open(glove_searchspace_file, 'rb') as file:
             self.glove_searchspace = pickle.load(file)
 
-        self.nlp = spacy.load("en_core_web_lg", exclude=['ner'])
+        self.nlp = spacy.load("en_core_web_sm", exclude=['ner'])
         customize_stopwords(self.nlp, [' '])
         self.nlp.add_pipe('sentence_punctuation', before='parser')
         self.nlp.add_pipe('clausing', before='parser')
@@ -122,7 +122,8 @@ class TextProcessor(object):
         """
         # Token does not exist in VAD, but does in GLoVe
         if token.has_vector:
-            return self.get_k_nearest(token.vector)
+            location = self.glove_searchspace.get('labels').index(token.lemma_.lower())
+            return self.get_k_nearest(self.glove_searchspace.get('tree').data.base[location])
         logging.info(f"Token <{token}> has no GLoVe representation. Representation will be computed from all other tokens in the clause...")
         return np.array([np.nan, np.nan, np.nan])
 
