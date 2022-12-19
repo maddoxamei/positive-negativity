@@ -21,8 +21,8 @@ def get_embeddings(sentences, processor: "word_vectors.transforms.TextProcessor"
             embedded_sents.append(np.asarray(embedding))
     return embedded_sents
 
-def valence_extremity(embedded_sent):
-    max_valence_index = np.argmax(embedded_sent[:, 0])
+def valence_extremity(embedded_sent, neutral: float = 0.5):
+    max_valence_index = np.argmax(np.abs(embedded_sent[:, 0]-neutral))
     return embedded_sent[max_valence_index]
 
 def dimension_average(embedded_sent):
