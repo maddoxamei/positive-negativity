@@ -105,6 +105,8 @@ class TextProcessor(object):
             vector = token._.get('vad_vector')
             if vector is None:
                 vector = self._handle_unknowns(token)
+                if token._.is_negated:
+                    vector = np.array([1-vector[0], vector[1], vector[2]])
             vectors.append(vector)
         vectors = np.asarray(vectors)
         vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
