@@ -1,0 +1,16 @@
+batch_size: 32
+dropout: 0.2
+embedding_size: 300
+fit_doc_path: ../data/IMDB_reviews
+glove_lexicon_file: ../data/lexicons/glove.6B.300d_minkowski
+hidden_size: 100
+learning_rate: 0.001
+n_input_features: 1
+num_layers: 10
+num_workers: 0
+output_size: 1
+stopword_language: english
+tokenizer: basic_english
+train_split: 0.8
+vad_lexicon_file: ../data/lexicons/NRC-VAD-Lexicon
+valence_only: false

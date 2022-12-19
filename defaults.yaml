@@ -17,3 +17,5 @@ datamodule:
   stopword_language: english
   vad_lexicon_file: ../data/lexicons/NRC-VAD-Lexicon
   glove_lexicon_file: ../data/lexicons/glove.6B.300d_minkowski
+
+valence_only: False

@@ -3,29 +3,33 @@ import os
 from transforms import *
 from utils import *
 from glob import glob
+import yaml
 
 
 def get_sections(sentence_vectors):
     four_fifths = int(len(sentence_vectors) * 4 / 5)
     return sentence_vectors[:four_fifths], sentence_vectors[four_fifths:]
 
-def get_section_sentiment(section_average):
+def get_section_sentiment(section_average, valence_only):
     """
     :param section_average:
     :return: True if postive, False if negative
     """
-    # When looked at both valence and arousal when determining sentiment
-    return bool(section_average > .5*.2)
     # When looked at valence when determining sentiment
-    # return bool(section_average > .5)
+    if valence_only:
+        return bool(section_average > .5)
+    # When looked at both valence and arousal when determining sentiment
+    else:
+        return bool(section_average > .5*.2)
 
-def get_document_sentiment(sentence_vectors, threshold=.2):
+
+def get_document_sentiment(sentence_vectors, valence_only, threshold=.2):
     first_section, second_section = get_sections(sentence_vectors)
 
     # Entire document sentiment is simply the "first section" sentiment
     # if there is only one sentence in the entire document
     if len(second_section) == 0:
-        return get_section_sentiment(first_section)
+        return get_section_sentiment(first_section, valence_only=valence_only)
 
     # Get section averages
     first_section_average = np.mean(first_section)
@@ -35,8 +39,8 @@ def get_document_sentiment(sentence_vectors, threshold=.2):
     if len(second_section) > 2:
         second_section_average = np.append(second_section, np.repeat(second_section[-1], len(second_section) // 2)).mean()
 
-    first_section_sentiment = get_section_sentiment(first_section_average)
-    second_section_sentiment = get_section_sentiment(second_section_average)
+    first_section_sentiment = get_section_sentiment(first_section_average, valence_only=valence_only)
+    second_section_sentiment = get_section_sentiment(second_section_average, valence_only=valence_only)
 
     # If the first and second sections have different sentiments, and
     #   the difference between the sentiments is sufficient, then
@@ -54,12 +58,15 @@ documents = list(glob('data/IMDB_reviews/*.txt'))
 processor = TextProcessor('data/lexicons/NRC-VAD-Lexicon.txt', 'data/lexicons/glove.6B.50d.pickle')
 strDir = r'C:\File\GitHub\positive-negativity'
 
+with open(os.path.join(strDir, 'defaults.yaml'), 'r') as file:
+    defaults = yaml.safe_load(file)
+
 for iter,doc_string in enumerate(documents):
     print(doc_string)
     sentences = get_doc_sentences(doc_string, processor)
     embeddings = get_embeddings(sentences, processor)
-    sentence_vectors = get_sentence_vectors(embeddings)
-    result = get_document_sentiment(sentence_vectors)
+    sentence_vectors = get_sentence_vectors(embeddings, valence_only=defaults.get('valence_only'))
+    result = get_document_sentiment(sentence_vectors, valence_only=defaults.get('valence_only'))
     # not sure what you were wanting to print and why
     np.savetxt(os.path.join(strDir, "data/rule_predictions",f"{doc_string}_{result}_sentence_metrics.csv", sentence_vectors))
     print(result)

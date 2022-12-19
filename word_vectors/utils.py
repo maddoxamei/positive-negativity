@@ -31,7 +31,7 @@ def dimension_average(embedded_sent):
     return np.mean(embedded_sent, axis=0)
 
 
-def get_sentence_vectors(embedded_sentences: List[np.ndarray], reduction_function=dimension_average) -> np.ndarray:
+def get_sentence_vectors(embedded_sentences: List[np.ndarray], reduction_function=dimension_average, valence_only: bool = False) -> np.ndarray:
     """ Represent sentences as a single number
 
     :param embedded_sentences:
@@ -39,8 +39,10 @@ def get_sentence_vectors(embedded_sentences: List[np.ndarray], reduction_functio
     :return: array of shape (NUM_OF_SENTENCES, )
     """
     sentence_vectors = np.asarray([reduction_function(sent) for sent in embedded_sentences])
-    # Look at both valence and arousal when determining sentiment
-    sentence_vectors = sentence_vectors[:, 0]*sentence_vectors[:, 1]
     # Just look at valence when determining sentiment
-    # sentence_vectors = sentence_vectors[:, 0]
+    if valence_only:
+        sentence_vectors = sentence_vectors[:, 0]
+    # Look at both valence and arousal when determining sentiment
+    else:
+        sentence_vectors = sentence_vectors[:, 0]*sentence_vectors[:, 1]
     return sentence_vectors

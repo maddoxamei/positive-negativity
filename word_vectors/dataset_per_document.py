@@ -15,6 +15,7 @@ class Dataset(torch.utils.data.Dataset):
                  fit_doc_path: str,
                  vad_lexicon_file: str,
                  glove_lexicon_file: str,
+                 valence_only,
                  **kwargs
                  ):
         self.documents = [
@@ -24,6 +25,7 @@ class Dataset(torch.utils.data.Dataset):
         ]
         self.text_processor = TextProcessor(vad_lexicon_file+'.txt', glove_lexicon_file+'.pickle')
         self.label_encoder = self.setup()
+        self.valence_only = valence_only
 
     def __len__(self) -> int:
         return len(self.documents)
@@ -36,7 +38,7 @@ class Dataset(torch.utils.data.Dataset):
         """
         sentences = get_doc_sentences(self.documents[idx], self.text_processor)
         embeddings = get_embeddings(sentences, self.text_processor)
-        sentence_vectors = get_sentence_vectors(embeddings) # np.ndarray of shape (NUM_OF_SENTENCES, )
+        sentence_vectors = get_sentence_vectors(embeddings, valence_only=self.valence_only) # np.ndarray of shape (NUM_OF_SENTENCES, )
         sentence_vectors = np.expand_dims(sentence_vectors, 1) # np.ndarray of shape (NUM_OF_SENTENCES, )
 
         label = os.path.basename(self.documents[idx]).rsplit('_', maxsplit=2)[1]
