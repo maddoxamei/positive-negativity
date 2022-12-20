@@ -23,7 +23,7 @@ class Dataset(torch.utils.data.Dataset):
             for path in os.listdir(fit_doc_path)
             if path.endswith((".txt"))
         ]
-        self.text_processor = TextProcessor(vad_lexicon_file+'.txt', glove_lexicon_file+'.pickle')
+        self.text_processor = TextProcessor(vad_lexicon_file+'.txt', glove_lexicon_file+'.pickle', clauses_parsing=False)
         self.label_encoder = self.setup()
         self.valence_only = valence_only
 

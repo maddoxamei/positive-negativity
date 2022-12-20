@@ -55,7 +55,7 @@ def get_document_sentiment(sentence_vectors, valence_only, threshold=.2):
 
 
 documents = list(glob('../data/IMDB_reviews/*.txt'))
-processor = TextProcessor('../data/lexicons/NRC-VAD-Lexicon.txt', '../data/lexicons/glove.6B.50d.pickle')
+processor = TextProcessor('../data/lexicons/NRC-VAD-Lexicon.txt', '../data/lexicons/glove.6B.50d.pickle', clauses_parsing=False)
 strDir = r'..'
 
 with open(os.path.join(strDir, 'defaults.yaml'), 'r') as file:
