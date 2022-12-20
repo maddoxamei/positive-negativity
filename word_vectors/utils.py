@@ -21,7 +21,6 @@ def get_embeddings(sentences, processor: "word_vectors.transforms.TextProcessor"
     embedded_sents = []
     for sent in sentences:
         embedding = processor.get_token_embeddings(sent, remove_pseudowords=True, remove_stopwords=True, polarization_thresh=(.2,.1,.1))
-        print(embedding)
         if len(embedding) > 0:
             embedded_sents.append(np.asarray(embedding))
     return embedded_sents

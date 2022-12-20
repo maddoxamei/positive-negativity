@@ -74,6 +74,8 @@ class TextProcessor(object):
                     vector = np.array([1 - vector[0], vector[1], vector[2]])
             vectors.append(vector)
         vectors = np.asarray(vectors)
+        if len(vectors) == 0:
+            return vectors
         vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
         return vectors[~np.isnan(vectors[:,0])]
         return np.nan_to_num(vectors)
