@@ -6,7 +6,8 @@ import spacy
 import re
 
 additional_sentence_boundaries: List[str] = [';']
-negation_words: Union[List[str], Set[str]] = ["not", "no"]
+negation_words_phrases: Union[List[str], Set[str]] = ["not"]
+negation_words_next: Union[List[str], Set[str]] = ["no", "neither", "nor"]
 
 @spacy.Language.component('sentence_punctuation')
 def additional_sentence_parsing(doc):
@@ -45,7 +46,9 @@ def token_negation(doc):
     :return:
     """
     for i, token in enumerate(doc):
-        if token.lower_ in negation_words:
+        if token.lemma_.lower() in negation_words_next:
+            doc[i+1]._.set('is_negated', not token._.get('is_negated'))
+        if token.lemma_.lower() in negation_words_phrases:
             for j in range(i+1, len(doc)):
                 if doc[j].is_punct or doc[j].is_sent_start:
                     break
