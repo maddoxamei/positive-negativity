@@ -6,8 +6,10 @@ from sklearn.preprocessing import OneHotEncoder
 import pytorch_lightning as pl
 import os
 import numpy as np
-from transforms import *
-from utils import *
+from .transforms import *
+from .utils import *
+from pathlib import Path
+from glob import glob
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -18,12 +20,8 @@ class Dataset(torch.utils.data.Dataset):
                  valence_only,
                  **kwargs
                  ):
-        self.documents = [
-            os.path.join(fit_doc_path, path)
-            for path in os.listdir(fit_doc_path)
-            if path.endswith((".txt"))
-        ]
-        self.text_processor = TextProcessor(vad_lexicon_file+'.txt', glove_lexicon_file+'.pickle')
+        self.documents = glob(os.path.join(fit_doc_path, '*.txt')) if Path(fit_doc_path).is_dir() else [fit_doc_path]
+        self.text_processor = TextProcessor(vad_lexicon_file, glove_lexicon_file)
         self.label_encoder = self.setup()
         self.valence_only = valence_only
 

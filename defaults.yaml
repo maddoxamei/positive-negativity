@@ -15,7 +15,7 @@ datamodule:
   num_workers: 0
   train_split: 0.8
   stopword_language: english
-  vad_lexicon_file: ../data/lexicons/NRC-VAD-Lexicon
-  glove_lexicon_file: ../data/lexicons/glove.6B.300d_l2
+  vad_lexicon_file: ../data/lexicons/NRC-VAD-Lexicon.txt
+  glove_lexicon_file: ../data/lexicons/glove.6B.300d_l2.pickle
 
 valence_only: True

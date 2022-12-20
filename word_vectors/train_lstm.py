@@ -6,6 +6,8 @@ from model import *
 debug_flag = False
 
 if __name__ == '__main__':
+    pl.seed_everything(0)
+
     with open('../defaults.yaml', 'r') as file:
         defaults = yaml.safe_load(file)
 
@@ -20,5 +22,4 @@ if __name__ == '__main__':
 
     trainer.fit(model, datamodule=datamodule)
     ts_model = model.to_torchscript(method="trace", example_inputs=train_dataset[0][0].unsqueeze(0))
-    torch.jit.save(ts_model, "model.torchscript")
-
+    torch.jit.save(ts_model, "../artifacts/model.torchscript")
