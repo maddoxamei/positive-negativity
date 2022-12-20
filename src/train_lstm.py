@@ -1,7 +1,7 @@
 import yaml
 
-from dataset_per_document import *
-from model import *
+from word_vectors.dataset_per_document import *
+from word_vectors.model import *
 
 debug_flag = False
 

@@ -38,7 +38,7 @@ class Dataset(torch.utils.data.Dataset):
         # sentence_vectors = get_sentence_sentiments_from_pretrained(sentences, self.text_processor)
         embeddings = get_embeddings(sentences, self.text_processor)
         sentence_vectors = get_sentence_vectors(embeddings, valence_only=self.valence_only) # np.ndarray of shape (NUM_OF_SENTENCES, )
-        sentence_vectors = np.expand_dims(sentence_vectors, 1) # np.ndarray of shape (NUM_OF_SENTENCES, )
+        sentence_vectors = np.expand_dims(sentence_vectors, 1)
 
         # Get the target label
         label = os.path.basename(self.documents[idx]).rsplit('_', maxsplit=2)[1]

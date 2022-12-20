@@ -1,12 +1,9 @@
 import logging
 import pickle
-from typing import List, Union, Generator, Tuple
-import re
+from typing import Tuple
 
-import numpy as np
 import spacy.tokens
-from sklearn.neighbors import BallTree
-from word_vectors.spacy_utils import *
+from src.word_vectors.spacy_utils import *
 
 
 class TextProcessor(object):

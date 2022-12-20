@@ -1,7 +1,7 @@
-import os
 import argparse
-from word_vectors.dataset_per_document import *
-from word_vectors.rules_model import *
+from src.word_vectors.dataset_per_document import *
+from src.word_vectors.rules_model import *
+from tqdm import tqdm
 
 """
 Driver script to create the glove searchspace used for vectorizing words
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     sentiment_confusion_matrix = np.zeros((2,2))
     sentiment_for_thwarted_confusion_matrix = np.zeros((2,2))
-    for i, (embedded_sentences, _, label) in enumerate(dataset):
+    for i, (embedded_sentences, _, label) in tqdm(enumerate(dataset), desc="Evaluating the LSTM model"):
         with torch.no_grad():
             result = model(embedded_sentences.unsqueeze(0)).round().int().numpy()
         true_sent = int('positive' in dataset.documents[i])
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     thwarted_confusion_matrix = np.zeros((2,2))
     sentiment_for_thwarted_confusion_matrix = np.zeros((2,2))
 
-    for iter, doc_string in enumerate(dataset.documents):
+    for iter, doc_string in tqdm(enumerate(dataset.documents), desc="Evaluating the Rules-Based model"):
         sentences = get_doc_sentences(doc_string, dataset.text_processor)
         # sentence_vectors = get_sentence_sentiments_from_pretrained(sentences, processor, False)
         embeddings = get_embeddings(sentences, dataset.text_processor)

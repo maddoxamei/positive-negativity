@@ -1,8 +1,8 @@
 model:
   embedding_size: 300
-  hidden_size: 100
-  num_layers: 10
-  dropout: 0.2
+  hidden_size: 10
+  num_layers: 5
+  dropout: 0.01
   learning_rate: 0.001
 
 trainer:
