@@ -6,10 +6,10 @@ To get this project running on your local machine:
 1. Install python (3.8.10)
 2. Run `pip install -r requirements.txt` to ensure all necessary libraries are installed
 3. Run `py -3 -m spacy download en_core_web_sm` to install the spacy pipeline
-3. Download and extract pretrained GLoVe vectors from https://nlp.stanford.edu/data/glove.6B.zip
-4. Run `py -3 create_searchspaces.py -f <location_to_extracted_file>`
-4. Check directories in defaults.yaml (in project directory)
-5. Populate data/IMDB_reviews with .txt files.  See Data Set-up.
+4. Download and extract pretrained GLoVe vectors from https://nlp.stanford.edu/data/glove.6B.zip
+5. Run `py -3 create_searchspaces.py -f <location_to_extracted_file>`
+6. Check directories in src/defaults.yaml
+7. Populate data/IMDB_reviews with .txt files.  See Data Set-up.
 
 ### Prerequisites
 
