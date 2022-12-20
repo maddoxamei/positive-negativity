@@ -34,8 +34,8 @@ class TextProcessor(object):
         spacy.tokens.Token.set_extension("is_pseudo", default=False, force=True)
         spacy.tokens.Token.set_extension("is_negated", default=False, force=True)
         spacy.tokens.Token.set_extension("vad_vector", getter=self._get_vad_representation, force=True)
-        spacy.tokens.Span.set_extension("vad_vector", getter=self._get_filled_vectors, force=True)
-        spacy.tokens.Doc.set_extension("vad_vector", getter=self._get_filled_vectors, force=True)
+        spacy.tokens.Span.set_extension("vad_vector", getter=self.get_token_embeddings, force=True)
+        spacy.tokens.Doc.set_extension("vad_vector", getter=self.get_token_embeddings, force=True)
 
     def __call__(self, text: str) -> List[str]:
         """
@@ -62,11 +62,25 @@ class TextProcessor(object):
 
     def get_token_embeddings(self, obj: Union[str, spacy.tokens.Doc, spacy.tokens.Span], **kwargs) -> List[
         spacy.tokens.span.Span]:
-        return [token._.vad_vector for token in self.get_token_obj(obj, **kwargs)]
+        # vectors = np.asarray([token._.get('vad_vector') for token in obj])
+        # vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
+        # return np.nan_to_num(vectors)
+        vectors = []
+        for token in self.get_token_obj(obj, **kwargs):
+            vector = token._.get('vad_vector')
+            if vector is None:
+                vector = self._handle_unknowns(token)
+                if token._.is_negated:
+                    vector = np.array([1 - vector[0], vector[1], vector[2]])
+            vectors.append(vector)
+        vectors = np.asarray(vectors)
+        vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
+        return vectors[~np.isnan(vectors[:,0])]
+        return np.nan_to_num(vectors)
 
     def _filter_tokens(self, obj: Union[spacy.tokens.Doc, spacy.tokens.Span], remove_pseudowords: bool = False,
                        remove_stopwords: bool = True, polarization_thresh: Tuple[float, float, float] = (0, 0, 0),
-                       neutral: Tuple[float, float, float] = (0.5, 0.5, 0.5)) -> List[spacy.tokens.Token]:
+                       neutral: Tuple[float, float, float] = (0.5, 0.0, 0.0)) -> List[spacy.tokens.Token]:
         """ Return non-punctuation tokens __ with pseudowords and stopwords removed if desired
 
         :param obj:
@@ -95,22 +109,6 @@ class TextProcessor(object):
         if token._.is_negated:
             return np.array([1-vector[0], vector[1], vector[2]])
         return vector
-
-    def _get_filled_vectors(self, obj: Union[spacy.tokens.Doc, spacy.tokens.Span]):
-        # vectors = np.asarray([token._.get('vad_vector') for token in obj])
-        # vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
-        # return np.nan_to_num(vectors)
-        vectors = []
-        for token in obj:
-            vector = token._.get('vad_vector')
-            if vector is None:
-                vector = self._handle_unknowns(token)
-                if token._.is_negated:
-                    vector = np.array([1-vector[0], vector[1], vector[2]])
-            vectors.append(vector)
-        vectors = np.asarray(vectors)
-        vectors = np.where(np.isnan(vectors), np.nanmean(vectors, axis=0), vectors)
-        return np.nan_to_num(vectors)
 
     def _handle_unknowns(self, token: spacy.tokens.Token) -> np.ndarray:
         """
