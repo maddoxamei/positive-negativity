@@ -23,7 +23,7 @@ def clause_parsing(doc):
         return doc
     for i, token in enumerate(doc[:-2]):
         prior_tag = doc[max(i-2, 0)].tag_ if doc[max(i-1, 0)].is_punct else doc[max(i-1, 0)].tag_
-        if token.tag_ in ('CC', 'IN') and prior_tag != doc[i+1].tag_:
+        if token.tag_ in ('CC', 'IN') and prior_tag != doc[i+1].tag_ and prior_tag != doc[i+2].tag_:
             # split the document at the following punctuation (due to tokenization process, this excludes apostrophes)
             if doc[max(i - 1, 0)].is_sent_start or doc[max(i - 1, 0)].is_punct:
                 for j in range(i, len(doc)-1):
