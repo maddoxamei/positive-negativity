@@ -1,9 +1,6 @@
 import pickle
 from typing import List
 
-from sklearn.neighbors import BallTree
-from sklearn.preprocessing import normalize
-
 # from flair.data import Sentence
 # from flair.models import TextClassifier
 
@@ -71,12 +68,3 @@ def get_sentence_vectors(embedded_sentences: List[np.ndarray], reduction_functio
     else:
         sentence_vectors = sentence_vectors[:, 0]*sentence_vectors[:, 1]
     return sentence_vectors
-
-
-def create_glove_searchspace(labels, encodings):
-    # Row-wise normalization to make cosine distance translate to euclidean distance
-    encodings = normalize(encodings, axis=1, norm='l2')
-    tree = BallTree(encodings, metric='l2')
-    with open('data/lexicons/glove.6B.300d_l2.pickle', 'wb') as file:
-        pickle.dump({'labels': np.asarray(labels), 'tree': tree}, file)
-

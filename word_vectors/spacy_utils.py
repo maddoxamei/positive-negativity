@@ -1,5 +1,7 @@
 from typing import List, Set, Dict, Union
 
+"""Helper functions for the spacy pipeline. Not meant to be called by user-code"""
+
 import numpy as np
 import sklearn.metrics.pairwise
 import spacy
@@ -11,6 +13,7 @@ negation_words_next: Union[List[str], Set[str]] = ["no", "neither", "nor"]
 
 @spacy.Language.component('sentence_punctuation')
 def additional_sentence_parsing(doc):
+    """ Include additional symbols/patterns as sentence boundaries besides the standard punctuation list"""
     for i, token in enumerate(doc):
         if token.lower_ in additional_sentence_boundaries:
             doc[i+1].sent_start = True
@@ -40,10 +43,6 @@ def token_negation(doc):
     """ Flags all words between the negation word(s) and first punctuation following said word as negation(s).
 
     Handles double negative by applying flag and then removing it once second negation occurs.
-
-    :param doc:
-    :param negation_words:
-    :return:
     """
     for i, token in enumerate(doc):
         if token.lemma_.lower() in negation_words_next:
@@ -57,6 +56,7 @@ def token_negation(doc):
 
 @spacy.Language.component('pseudo_words')
 def identify_pseudowords(doc):
+    """ Convert particular tokens which may have low-frequencies or be unique for a given text into a generalized category. Especially useful with bag-of-words approaches."""
     for token in doc:
         if token.is_digit:
             token.lemma_ = '-DIGIT-'
@@ -75,6 +75,7 @@ def identify_pseudowords(doc):
 
 
 def customize_stopwords(nlp, additional_stopwords: Union[List[str], Set[str]] = [], remove_stopwords: Union[List[str], Set[str]] = []):
+    """Alter the default stopword list"""
     nlp.Defaults.stop_words |= set(additional_stopwords)
     nlp.Defaults.stop_words -= set(remove_stopwords)
 

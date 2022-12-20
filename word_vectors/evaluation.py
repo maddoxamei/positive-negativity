@@ -28,7 +28,7 @@ model = torch.jit.load('model.torchscript').eval()
 sentiment_confusion_matrix = np.zeros((2,2))
 sentiment_for_thwarted_confusion_matrix = np.zeros((2,2))
 for i, (embedded_sentences, _, label) in enumerate(dataset):
-    with torch.no_gr
+    with torch.no_grad():
         result = model(embedded_sentences.unsqueeze(0)).round().int().numpy()
     true_sent = int('positive' in dataset.documents[i])
     true_thwart = int('thwart' in dataset.documents[i])

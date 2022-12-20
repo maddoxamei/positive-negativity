@@ -32,16 +32,17 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx: int):
         """
-
         :param clause_idx: desired clause index, NOT document index
         :return:
         """
+        # Get the vectorized summarization of a preprocessed polarized clauses/sentences
         sentences = get_doc_sentences(self.documents[idx], self.text_processor)
         # sentence_vectors = get_sentence_sentiments_from_pretrained(sentences, self.text_processor)
         embeddings = get_embeddings(sentences, self.text_processor)
         sentence_vectors = get_sentence_vectors(embeddings, valence_only=self.valence_only) # np.ndarray of shape (NUM_OF_SENTENCES, )
         sentence_vectors = np.expand_dims(sentence_vectors, 1) # np.ndarray of shape (NUM_OF_SENTENCES, )
 
+        # Get the target label
         label = os.path.basename(self.documents[idx]).rsplit('_', maxsplit=2)[1]
         label = self.label_encoder.transform([[label]])
         # label = [['positive' in self.documents[idx]]]
@@ -49,6 +50,7 @@ class Dataset(torch.utils.data.Dataset):
         return torch.as_tensor(sentence_vectors).type(torch.float32), len(sentence_vectors), torch.as_tensor(label).type(torch.float32)
 
     def setup(self):
+        """Establishes the labels associated with the problem-scape"""
         labels = set([])
         for doc in self.documents:
             labels.add(os.path.basename(doc).rsplit('_', maxsplit=2)[1])
@@ -59,12 +61,18 @@ class Dataset(torch.utils.data.Dataset):
         return label_encoder
 
 def collate_function(batch: List[Tuple[torch.Tensor, int]]) -> Tuple[torch.Tensor, List[int]]:
-    """
+    """ Dictates how different samples are to be combined for batched-training on the LSTM
 
     :param batch: e.g. [(tensor([4, 7, 2]), 3), (tensor([16,  9,  5, 14]), 4)]
     :return: e.g.
     """
+    # Separate clauses and their respective lengths into separate variables
+    #   clauses: [tensor([4, 7, 2]), tensor([16,  9,  5, 14])]
+    #   lengths: [3, 4]
     documents, lengths, labels = zip(*batch)
+    # Pad
+    #   tensor([[ 4,  7,  2,  0],
+    #           [16,  9,  5, 14]]
     padded_documents = pad_sequence(documents, batch_first=True)
     return padded_documents, lengths, torch.stack(labels).squeeze(1)
 
