@@ -1,9 +1,4 @@
-import os
-
-from transforms import *
 from utils import *
-from glob import glob
-import yaml
 
 
 def get_sections(sentence_vectors):
@@ -51,22 +46,4 @@ def get_document_sentiment(sentence_vectors, valence_only, threshold=.2):
 
     # If there is no thwarting, entire document sentiment is simply the "first section" sentiment
     # If there is IS thwarting, entire document sentiment is simply the "second section" sentiment
-    return second_section_sentiment if thwarted else first_section_sentiment
-
-
-documents = list(glob('../data/IMDB_reviews/*.txt'))
-processor = TextProcessor('../data/lexicons/NRC-VAD-Lexicon.txt', '../data/lexicons/glove.6B.50d.pickle', clauses_parsing=False)
-strDir = r'..'
-
-with open(os.path.join(strDir, 'defaults.yaml'), 'r') as file:
-    defaults = yaml.safe_load(file)
-
-for iter,doc_string in enumerate(documents):
-    print(doc_string)
-    sentences = get_doc_sentences(doc_string, processor)
-    sentence_vectors = get_sentence_sentiments_from_pretrained(sentences, processor, False)
-    # embeddings = get_embeddings(sentences, processor)
-    # sentence_vectors = get_sentence_vectors(embeddings, valence_only=defaults.get('valence_only'))
-    result = get_document_sentiment(sentence_vectors, valence_only=defaults.get('valence_only'))
-    # not sure what you were wanting to print and why
-    np.savetxt(os.path.join(strDir, "data", "rule_predictions",f"{os.path.basename(doc_string).rpartition('.')[0]}_{result}_sentence_metrics.csv"), sentence_vectors)
+    return second_section_sentiment if thwarted else first_section_sentiment, thwarted

@@ -19,4 +19,6 @@ if __name__ == '__main__':
     )
 
     trainer.fit(model, datamodule=datamodule)
+    ts_model = model.to_torchscript(method="trace", example_inputs=train_dataset[0][0].unsqueeze(0))
+    torch.jit.save(ts_model, "model.torchscript")
 

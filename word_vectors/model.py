@@ -39,9 +39,12 @@ class LSTM_Classifier(pl.LightningModule):
         # h_0 = Variable(torch.randn(1, batch_size, self.hparams.hidden_size))
         # c_0 = Variable(torch.randn(1, batch_size, self.hparams.hidden_size))
 
-        packed_input = pack_padded_sequence(text, text_lengths, batch_first=True, enforce_sorted=False)
-        packed_output, _ = self.lstm(packed_input, (h_0, c_0))
-        output, _ = pad_packed_sequence(packed_output, batch_first=True)
+        if text_lengths is None:
+            output, _ = self.lstm(text, (h_0, c_0))
+        else:
+            packed_input = pack_padded_sequence(text, text_lengths, batch_first=True, enforce_sorted=False)
+            packed_output, _ = self.lstm(packed_input, (h_0, c_0))
+            output, _ = pad_packed_sequence(packed_output, batch_first=True)
 
         text_features = self.linear(output[:, -1])
         # if len(text_features.shape) == 3:

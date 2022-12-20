@@ -4,8 +4,8 @@ from typing import List
 from sklearn.neighbors import BallTree
 from sklearn.preprocessing import normalize
 
-from flair.data import Sentence
-from flair.models import TextClassifier
+# from flair.data import Sentence
+# from flair.models import TextClassifier
 
 import numpy as np
 
@@ -13,22 +13,22 @@ def get_doc_sentences(path, processor) -> List["spacy.tokens.Span"]:
     with open(path, 'r') as file:
         return processor.get_sentences(file.read())
 
-def get_sentence_sentiments_from_pretrained(sentences, processor, binarized=False):
-    classifier = TextClassifier.load('en-sentiment')
-    sentiments = []
-    for sent in sentences:
-        tokens = processor.get_token_strings(sent, remove_pseudowords=False, remove_stopwords=False)
-        if len(tokens) == 0:
-            continue
-        phrase = Sentence(' '.join(tokens))
-        classifier.predict(phrase)
-        results = phrase.labels[0].to_dict()
-        binary_label = int(results.get('value')=='POSITIVE')
-        if binarized:
-            sentiments.append(binary_label)
-        else:
-            sentiments.append(np.interp(results.get('confidence'), [0, 1], [.5, binary_label]))
-    return np.array(sentiments)
+# def get_sentence_sentiments_from_pretrained(sentences, processor, binarized=False):
+#     classifier = TextClassifier.load('en-sentiment')
+#     sentiments = []
+#     for sent in sentences:
+#         tokens = processor.get_token_strings(sent, remove_pseudowords=False, remove_stopwords=False)
+#         if len(tokens) == 0:
+#             continue
+#         phrase = Sentence(' '.join(tokens))
+#         classifier.predict(phrase)
+#         results = phrase.labels[0].to_dict()
+#         binary_label = int(results.get('value')=='POSITIVE')
+#         if binarized:
+#             sentiments.append(binary_label)
+#         else:
+#             sentiments.append(np.interp(results.get('confidence'), [0, 1], [.5, binary_label]))
+#     return np.array(sentiments)
 
 
 def get_embeddings(sentences, processor: "word_vectors.transforms.TextProcessor") -> List[np.ndarray]:

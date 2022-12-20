@@ -23,7 +23,7 @@ class Dataset(torch.utils.data.Dataset):
             for path in os.listdir(fit_doc_path)
             if path.endswith((".txt"))
         ]
-        self.text_processor = TextProcessor(vad_lexicon_file+'.txt', glove_lexicon_file+'.pickle', clauses_parsing=False)
+        self.text_processor = TextProcessor(vad_lexicon_file+'.txt', glove_lexicon_file+'.pickle')
         self.label_encoder = self.setup()
         self.valence_only = valence_only
 
@@ -37,14 +37,14 @@ class Dataset(torch.utils.data.Dataset):
         :return:
         """
         sentences = get_doc_sentences(self.documents[idx], self.text_processor)
-        sentence_vectors = get_sentence_sentiments_from_pretrained(sentences, self.text_processor)
-        # embeddings = get_embeddings(sentences, self.text_processor)
-        # sentence_vectors = get_sentence_vectors(embeddings, valence_only=self.valence_only) # np.ndarray of shape (NUM_OF_SENTENCES, )
+        # sentence_vectors = get_sentence_sentiments_from_pretrained(sentences, self.text_processor)
+        embeddings = get_embeddings(sentences, self.text_processor)
+        sentence_vectors = get_sentence_vectors(embeddings, valence_only=self.valence_only) # np.ndarray of shape (NUM_OF_SENTENCES, )
         sentence_vectors = np.expand_dims(sentence_vectors, 1) # np.ndarray of shape (NUM_OF_SENTENCES, )
 
-        # label = os.path.basename(self.documents[idx]).rsplit('_', maxsplit=2)[1]
-        # label = self.label_encoder.transform([[label]])
-        label = [['positive' in self.documents[idx]]]
+        label = os.path.basename(self.documents[idx]).rsplit('_', maxsplit=2)[1]
+        label = self.label_encoder.transform([[label]])
+        # label = [['positive' in self.documents[idx]]]
 
         return torch.as_tensor(sentence_vectors).type(torch.float32), len(sentence_vectors), torch.as_tensor(label).type(torch.float32)
 
@@ -57,6 +57,16 @@ class Dataset(torch.utils.data.Dataset):
         label_encoder.fit(np.asarray(sorted(labels)).reshape((-1, 1)))
 
         return label_encoder
+
+def collate_function(batch: List[Tuple[torch.Tensor, int]]) -> Tuple[torch.Tensor, List[int]]:
+    """
+
+    :param batch: e.g. [(tensor([4, 7, 2]), 3), (tensor([16,  9,  5, 14]), 4)]
+    :return: e.g.
+    """
+    documents, lengths, labels = zip(*batch)
+    padded_documents = pad_sequence(documents, batch_first=True)
+    return padded_documents, lengths, torch.stack(labels).squeeze(1)
 
 
 class DataModule(pl.LightningDataModule):
@@ -74,24 +84,14 @@ class DataModule(pl.LightningDataModule):
             [split, len(dataset) - split],
         )
 
-    def collate_function(self, batch: List[Tuple[torch.Tensor, int]]) -> Tuple[torch.Tensor, List[int]]:
-        """
-
-        :param batch: e.g. [(tensor([4, 7, 2]), 3), (tensor([16,  9,  5, 14]), 4)]
-        :return: e.g.
-        """
-        documents, lengths, labels = zip(*batch)
-        padded_documents = pad_sequence(documents, batch_first=True)
-        return padded_documents, lengths, torch.stack(labels).squeeze(1)
-
     def train_dataloader(self) -> "TRAIN_DATALOADERS":
         return torch.utils.data.DataLoader(self.train_set,
                                            batch_size=self.hparams.batch_size,
                                            num_workers=self.hparams.num_workers,
-                                           collate_fn=self.collate_function)
+                                           collate_fn=collate_function)
 
     def val_dataloader(self) -> "EVAL_DATALOADERS":
         return torch.utils.data.DataLoader(self.val_set,
                                            batch_size=self.hparams.batch_size,
                                            num_workers=self.hparams.num_workers,
-                                           collate_fn=self.collate_function)
+                                           collate_fn=collate_function)
