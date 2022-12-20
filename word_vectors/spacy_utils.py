@@ -25,17 +25,19 @@ def clause_parsing(doc):
     if len(doc) <= 3:
         return doc
     for i, token in enumerate(doc[:-2]):
-        prior_tag = doc[max(i-2, 0)].tag_ if doc[max(i-1, 0)].is_punct else doc[max(i-1, 0)].tag_
-        if token.tag_ in ('CC', 'IN') and prior_tag != doc[i+1].tag_ and prior_tag != doc[i+2].tag_:
+        prior_token = doc[max(i-1, 0)]
+        prior_non_punct_tags = {doc[max(i-3, 0)].tag_, doc[max(i-2, 0)].tag_} if prior_token.is_punct else {doc[max(i-2, 0)].tag_, doc[max(i-1, 0)].tag_}
+
+        if token.tag_ in ('CC', 'IN') and prior_non_punct_tags.isdisjoint({doc[i+1].tag_, doc[i+2].tag_}):
             # split the document at the following punctuation (due to tokenization process, this excludes apostrophes)
-            if doc[max(i - 1, 0)].is_sent_start or doc[max(i - 1, 0)].is_punct:
+            if prior_token.is_sent_start or (prior_token.is_punct and prior_token.tag_ != ','):
                 for j in range(i, len(doc)-1):
                     if doc[j].is_punct:
                         doc[j+1].is_sent_start = True
                         break
             # split the document at the conjunction if occurring in the middle of the sentence
-            if not (doc[max(i-1, 0)].is_sent_start or doc[max(i-1, 0)].is_punct):
-                doc[i+1].is_sent_start = True
+            elif token.tag_ == 'CC':
+                doc[i].is_sent_start = True
     return doc
 
 @spacy.Language.component('negation')
