@@ -37,12 +37,14 @@ class Dataset(torch.utils.data.Dataset):
         :return:
         """
         sentences = get_doc_sentences(self.documents[idx], self.text_processor)
-        embeddings = get_embeddings(sentences, self.text_processor)
-        sentence_vectors = get_sentence_vectors(embeddings, valence_only=self.valence_only) # np.ndarray of shape (NUM_OF_SENTENCES, )
+        sentence_vectors = get_sentence_sentiments_from_pretrained(sentences, self.text_processor)
+        # embeddings = get_embeddings(sentences, self.text_processor)
+        # sentence_vectors = get_sentence_vectors(embeddings, valence_only=self.valence_only) # np.ndarray of shape (NUM_OF_SENTENCES, )
         sentence_vectors = np.expand_dims(sentence_vectors, 1) # np.ndarray of shape (NUM_OF_SENTENCES, )
 
-        label = os.path.basename(self.documents[idx]).rsplit('_', maxsplit=2)[1]
-        label = self.label_encoder.transform([[label]])
+        # label = os.path.basename(self.documents[idx]).rsplit('_', maxsplit=2)[1]
+        # label = self.label_encoder.transform([[label]])
+        label = [['positive' in self.documents[idx]]]
 
         return torch.as_tensor(sentence_vectors).type(torch.float32), len(sentence_vectors), torch.as_tensor(label).type(torch.float32)
 

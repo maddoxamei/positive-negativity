@@ -13,7 +13,7 @@ class TextProcessor(object):
     """Preprocess data and handle edge-cases present in the training/test corpus.
 
         Cleanup process does NOT include token/word standardization."""
-    def __init__(self, vad_lexicon_file: str, glove_searchspace_file: str, k: int = 10, **kwargs) -> None:
+    def __init__(self, vad_lexicon_file: str, glove_searchspace_file: str, k: int = 10, clauses_parsing: bool = True, **kwargs) -> None:
         self.k = k
 
         logging.info("Creating a vector database of the NRC Valence-Arousal-Dominance Lexicon")
@@ -27,7 +27,8 @@ class TextProcessor(object):
         self.nlp = spacy.load("en_core_web_sm", exclude=['ner'])
         customize_stopwords(self.nlp, [' '])
         self.nlp.add_pipe('sentence_punctuation', before='parser')
-        self.nlp.add_pipe('clausing', before='parser')
+        if clauses_parsing:
+            self.nlp.add_pipe('clausing', before='parser')
         self.nlp.add_pipe('pseudo_words', after='lemmatizer')
         self.nlp.add_pipe('negation', last=True)
 

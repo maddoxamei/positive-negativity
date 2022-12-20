@@ -18,4 +18,4 @@ datamodule:
   vad_lexicon_file: ../data/lexicons/NRC-VAD-Lexicon
   glove_lexicon_file: ../data/lexicons/glove.6B.300d_l2
 
-valence_only: False
+valence_only: True
