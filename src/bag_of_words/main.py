@@ -10,7 +10,7 @@ from transforms import *
 debug_flag = False
 
 if __name__ == '__main__':
-    with open('../../defaults.yaml', 'r') as file:
+    with open('../defaults.yaml', 'r') as file:
         defaults = yaml.safe_load(file)
 
     datamodule = DataModule(**defaults.get('datamodule'))

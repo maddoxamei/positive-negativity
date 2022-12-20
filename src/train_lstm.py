@@ -8,7 +8,7 @@ debug_flag = False
 if __name__ == '__main__':
     pl.seed_everything(0)
 
-    with open('../defaults.yaml', 'r') as file:
+    with open('defaults.yaml', 'r') as file:
         defaults = yaml.safe_load(file)
 
     datamodule = DataModule(**defaults.get('datamodule'), valence_only=defaults.get('valence_only'))
