@@ -2,6 +2,7 @@ import argparse
 from src.word_vectors.dataset_per_document import *
 from src.word_vectors.rules_model import *
 from tqdm import tqdm
+import yaml
 
 """
 Driver script to create the glove searchspace used for vectorizing words
@@ -9,20 +10,17 @@ Driver script to create the glove searchspace used for vectorizing words
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--vad_lexicon_file", "-vad", type=str, required=True, help="Local path (folder+filename+extension) to the NRC-VAD Lexicon text file"
-)
-parser.add_argument(
-    "--glove_lexicon_file", "-glove", type=str, required=True, help="Local path (folder+filename+extension) to the GLoVe serialized search space"
-)
-parser.add_argument(
-    "--evaluation_path", "-eval", type=str, default="artifacts/example__positive_thwarted.txt", help="Local path to the file (folder+filename+extension) or file-containing directory (folder) for model evaluation purposes"
+    "--evaluation_path", "-eval", type=str, default="../artifacts/example__positive_thwarted.txt", help="Local path to the file (folder+filename+extension) or file-containing directory (folder) for model evaluation purposes"
 )
 
 if __name__ == "__main__":
     args = parser.parse_args()
     pl.seed_everything(0)
 
-    dataset = Dataset(args.evaluation_path, args.vad_lexicon_file, args.glove_lexicon_file, valence_only=True)
+    with open('defaults.yaml', 'r') as file:
+        defaults = yaml.safe_load(file).get('datamodule')
+
+    dataset = Dataset(args.evaluation_path, defaults.get('vad_lexicon_file'), defaults.get('glove_lexicon_file'), valence_only=defaults.get('valence_only'))
     datamodule = torch.utils.data.DataLoader(dataset,
                                              batch_size=4,
                                              num_workers=1,
@@ -32,7 +30,7 @@ if __name__ == "__main__":
     # ===================== LSTM MODEL ======================
     # ======================================================='
 
-    model = torch.jit.load('artifacts/model.torchscript').eval()
+    model = torch.jit.load('../artifacts/model.torchscript').eval()
 
     sentiment_confusion_matrix = np.zeros((2,2))
     sentiment_for_thwarted_confusion_matrix = np.zeros((2,2))

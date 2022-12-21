@@ -11,7 +11,7 @@ Driver script to create the glove searchspace used for vectorizing words
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--glove_lexicon_file", "-f", type=str, required=True, help="Local path (folder+filename+extension) to the GLoVe Lexicon text file"
+    "--glove_lexicon_file", "-f", type=str, required=True, help="Absolute local path (folder+filename+extension) to the GLoVe Lexicon text file"
 )
 
 if __name__ == "__main__":
